@@ -44,30 +44,30 @@ jobs:
     #    xml-report-filename: target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
 
 
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    steps:     
-      - name: ServiceNow Change
-        uses: ServiceNow/servicenow-devops-change@scratch/DEF0783855
-        id: create
-        with:
-          devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
-          instance-url: ${{ secrets.SN_INSTANCE_URL }}
-          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-          context-github: ${{ toJSON(github) }}
-          job-name: 'Deploy'
-          change-request: '{"setCloseCode":"true","attributes":{"short_description":"Terraform Deploy","description":"Terraform Deploy","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
+#  deploy:
+ #   name: Deploy
+  #  needs: build
+   # runs-on: ubuntu-latest
+    #steps:     
+     # - name: ServiceNow Change
+      #  uses: ServiceNow/servicenow-devops-change@scratch/DEF0783855
+       # id: create
+        #with:
+         # devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+          #instance-url: ${{ secrets.SN_INSTANCE_URL }}
+          #tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+          #context-github: ${{ toJSON(github) }}
+          #job-name: 'Deploy'
+          #change-request: '{"setCloseCode":"true","attributes":{"short_description":"Terraform Deploy","description":"Terraform Deploy","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
           #change-request: '{"setCloseCode":"true","autoCloseChange":true,"attributes":{"short_description":"Automated Software Deployment","description":"Automated Software Deployment.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
-          interval: '100'
-          timeout: '3600'
-          changeCreationTimeOut: '3600'
-          abortOnChangeCreationFailure: true
-          abortOnChangeStepTimeout: true
+          #interval: '100'
+          #timeout: '3600'
+          #changeCreationTimeOut: '3600'
+          #abortOnChangeCreationFailure: true
+          #abortOnChangeStepTimeout: true
           #deployment-gate: '{"environment":"deploymnet-gate","jobName":"postDeploy"}'
-      - name: Output of Change Creation
-        run: echo "change-request-number = ${{ steps.create.outputs.change-request-number }}" >> $GITHUB_OUTPUT
+      #- name: Output of Change Creation
+       # run: echo "change-request-number = ${{ steps.create.outputs.change-request-number }}" >> $GITHUB_OUTPUT
 
 
   postDeploy:
@@ -79,11 +79,11 @@ jobs:
         run: echo $HOME 
 
       - name: ServiceNow Get Change
-        uses: ServiceNow/servicenow-devops-get-change@v6.1.0
+        uses: ServiceNow/servicenow-devops-get-change@v5.1.0
         with:
           devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
           instance-url: ${{ secrets.SN_INSTANCE_URL }}
           tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
           context-github: ${{ toJSON(github) }}
-          change-details: '{"build_number":${{ github.run_number }},"pipeline_name":"CI & Maven","stage_name":"Deploy","attempt_number":"1"}'
+          change-details: '{"build_number": "20938808762","pipeline_name":"CI & Maven","stage_name":"Deploy","attempt_number":"1"}'
  
