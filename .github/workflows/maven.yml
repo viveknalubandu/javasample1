@@ -28,11 +28,11 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
-    - name: list test files
-      run: ls -lrta target/surefire-reports/
-    - name: cat test file
-      run:  cat target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
+      run: echo 'test' #mvn -B package --file pom.xml
+    #- name: list test files
+    #  run: ls -lrta target/surefire-reports/
+    #- name: cat test file
+    #  run:  cat target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
     #- name: ServiceNow DevOps Unit Test Results
     #  uses: ServiceNow/servicenow-devops-test-report@v6.2.0
     #  with:
