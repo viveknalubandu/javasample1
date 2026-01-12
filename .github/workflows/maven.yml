@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: ci_with_maven
+name: CI & Maven
 
 #on:
   #push:
@@ -33,15 +33,15 @@ jobs:
       run: ls -lrta target/surefire-reports/
     - name: cat test file
       run:  cat target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
-    - name: ServiceNow DevOps Unit Test Results
-      uses: ServiceNow/servicenow-devops-test-report@v3.1.0
-      with:
-        devops-integration-token:  ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
-        instance-url: ${{ secrets.SN_INSTANCE_URL }}
-        tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-        job-name: build
-        context-github: ${{ toJSON(github) }}
-        xml-report-filename: target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
+    #- name: ServiceNow DevOps Unit Test Results
+    #  uses: ServiceNow/servicenow-devops-test-report@v6.2.0
+    #  with:
+    #    devops-integration-token:  ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+    #    instance-url: ${{ secrets.SN_INSTANCE_URL }}
+    #    tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+    #    job-name: build
+    #    context-github: ${{ toJSON(github) }}
+    #    xml-report-filename: target/surefire-reports/TEST-com.sa.web.SentimentControllerTest.xml
 
 
   deploy:
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:     
       - name: ServiceNow Change
-        uses: ServiceNow/servicenow-devops-change@v3.1.0
+        uses: ServiceNow/servicenow-devops-change@6.2.0
         id: create
         with:
           devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
@@ -65,14 +65,14 @@ jobs:
           changeCreationTimeOut: '3600'
           abortOnChangeCreationFailure: true
           abortOnChangeStepTimeout: true
-          deployment-gate: '{"environment":"deploymnet-gate","jobName":"postDeploy"}'
+          #deployment-gate: '{"environment":"deploymnet-gate","jobName":"postDeploy"}'
       - name: Output of Change Creation
         run: echo "change-request-number = ${{ steps.create.outputs.change-request-number }}" >> $GITHUB_OUTPUT
 
 
   postDeploy:
       runs-on: ubuntu-latest
-      environment : deploymnet-gate
+      #environment : deploymnet-gate
       needs: deploy
       steps:
       - name: Build with Maven
