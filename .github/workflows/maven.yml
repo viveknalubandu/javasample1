@@ -71,6 +71,7 @@ jobs:
 
   registerartifact:
     name: Register Artifact
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: ServiceNow Register Artifact
@@ -85,6 +86,7 @@ jobs:
   
   registerpackage:
     name: Register Package
+    needs: registerartifact
     runs-on: ubuntu-latest
     steps:
       - name: ServiceNow Register Package
@@ -101,7 +103,7 @@ jobs:
   postDeploy:
       runs-on: ubuntu-latest
       #environment : deploymnet-gate
-      needs: build
+      needs: registerpackage
       steps:
       - name: Build with Maven
         run: echo $HOME 
@@ -114,4 +116,19 @@ jobs:
           tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
           context-github: ${{ toJSON(github) }}
           change-details: '{"build_number": "20938905107","pipeline_name":"viveknalubandu/javasample1/CI & Maven","stage_name":"Deploy","attempt_number":"1"}'
+
+  deploy:
+    name: Deploy
+    needs: postDeploy
+    runs-on: ubuntu-latest
+    steps:     
+      - name: ServiceNow Update Change
+        uses: ServiceNow/servicenow-devops-update-change@v5.1.0
+        with:
+          devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+          instance-url: ${{ secrets.SN_INSTANCE_URL }}
+          context-github: ${{ toJSON(github) }}
+          change-request-number: 'CHG0030019'
+          change-request-details: '{"short_description":"Automated Software Deployment","description":"Automated Software Deployment.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}'
  
