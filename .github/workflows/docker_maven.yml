@@ -8,6 +8,7 @@ on:
  
 permissions: 
   contents: read
+
 env:
   SNOW_URL: ${{ secrets.SN_INSTANCE_URL }} 
   SNOW_TOKEN: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
