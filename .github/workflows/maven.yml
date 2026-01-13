@@ -85,5 +85,5 @@ jobs:
           instance-url: ${{ secrets.SN_INSTANCE_URL }}
           tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
           context-github: ${{ toJSON(github) }}
-          change-details: '{"build_number": "viveknalubandu","pipeline_name":"viveknalubandu/CI & Maven","stage_name":"Deploy","attempt_number":"1"}'
+          change-details: '{"build_number": "20938905107","pipeline_name":"viveknalubandu/javasample1/CI & Maven","stage_name":"Deploy","attempt_number":"1"}'
  
