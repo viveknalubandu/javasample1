@@ -78,7 +78,7 @@ jobs:
        steps:
          - name: get change
            run: |
-             sndevopscli get change -p "{\"buildNumber\":\"{ github.run_number }}\",\"stageName\":\"ServiceNowGetDevOpsChange\",\"pipelineName\":\"viveknalubandu/javasample1/Action & Env\"}"
+             sndevopscli get change -p "{\"buildNumber\":\"${ github.run_number }}\",\"stageName\":\"ServiceNowGetDevOpsChange\",\"pipelineName\":\"viveknalubandu/javasample1/Action & Env\"}"
  
   ArtifactAndPackage:
       runs-on: ubuntu-latest
