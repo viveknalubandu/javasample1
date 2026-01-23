@@ -6,6 +6,7 @@ name: GithubActionWorkflow
     #branches: ["master"]
   #pull_request:
     #branches: ["main"]
+
 on: workflow_dispatch
 permissions:
   contents: read
