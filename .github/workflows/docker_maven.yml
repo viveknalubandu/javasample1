@@ -1,11 +1,12 @@
 name: Action & Env
 
-on:
-  push:
-    branches: ["master"]
+#on:
+  #push:
+    #branches: ["master"]
   #pull_request: 
     #branches:  ["master"]  
- 
+on: workflow_dispatch 
+
 permissions: 
   contents: read
 
