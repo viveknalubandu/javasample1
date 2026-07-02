@@ -8,7 +8,12 @@ on:
       - 'release-*'    # Customize tag pattern as needed
   pull_request: 
     branches: ["master"]  
-    workflow_dispatch
+  workflow_dispatch:
+    # inputs:
+    #   tag:
+    #     description: 'Tag to deploy (e.g., v1.0.0)'
+    #     required: false
+    #     type: string
 
 permissions: 
   contents: read
