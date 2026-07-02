@@ -1,0 +1,113 @@
+name: Action & Env
+
+on:
+  push:
+    branches: ["master"]
+    tags:
+      - 'v*'           # Matches v1.0.0, v2.1.3, etc.
+      - 'release-*'    # Customize tag pattern as needed
+  pull_request: 
+    branches: ["master"]  
+    workflow_dispatch
+
+permissions: 
+  contents: read
+
+env:
+  SNOW_URL: ${{ secrets.SN_INSTANCE_URL }} 
+  SNOW_TOKEN: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+  SNOW_TOOLID: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+  CI_PIPELINE_ID: ${{ github.run_id }}
+  CI_API_V4_URL: ${{ github.server_url }}
+  CI_JOB_ID: ${{ github.run_id }}
+  CI_PROJECT_PATH: ${{ github.job }}
+  CI_REPOSITORY_NAME: ${{ github.repository }}
+  CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+  CI_PROJECT_TITLE: ${{ github.repository }}/${{github.workflow}}
+  CI_COMMIT_BRANCH: ${{ github.ref_name }}
+  CI_WORKFLOW_NAME: ${{ github.workflow }}
+  # Tag-related variables
+  GIT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'no-tag' }}
+  GIT_TAG_CLEAN: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'   # REQUIRED
+          java-version: '11' 
+        
+      - name: Run Maven build
+        run: |
+          echo 'build'
+          # ./gradlew clean test
+
+  ServiceNowDevOpsChange:
+     runs-on: ubuntu-latest
+     needs: build
+     container:
+       image: servicenowdocker/sndevops:6.2.0
+     env:
+       CI_JOB_NAME: "ServiceNowDevOpsChange"
+
+     steps:
+       - name: create change
+         run: |
+           sndevopscli create change -p "{\"changeStepDetails\":{\"timeout\":3600,\"interval\":10},\"autoCloseChange\":true,\"attributes\":{\"short_description\":\"Automated Software Deployment - ${{ env.GIT_TAG }}\",\"description\":\"Automated Software Deployment. Git Tag: ${{ env.GIT_TAG }}\",\"assignment_group\":\"a715cd759f2002002920bde8132e7018\",\"implementation_plan\":\"Software update is tested and results can be found in Test Summaries Tab.\",\"backout_plan\":\"When software fails in production, the previous software release will be re-deployed.\",\"test_plan\":\"Testing if the software was successfully deployed or not\"}}"
+
+  ServiceNowUpdateDevOpsChange:
+       runs-on: ubuntu-latest
+       needs: ServiceNowDevOpsChange
+       container:
+         image: servicenowdocker/sndevops:6.2.0
+       env:
+         CI_JOB_NAME: "ServiceNowUpdateDevOpsChange"
+  
+       steps:
+         - name: update change
+           run: |
+             sndevopscli update change -p "{\"short_description\":\"Updated Automated Software Deployment - ${{ env.GIT_TAG }}\",\"description\":\"Automated Software Deployment. Git Tag: ${{ env.GIT_TAG }}\",\"assignment_group\":\"a715cd759f2002002920bde8132e7018\",\"implementation_plan\":\"Software update is tested and results can be found in Test Summaries Tab.\",\"backout_plan\":\"When software fails in production, the previous software release will be re-deployed.\",\"test_plan\":\"Testing if the software was successfully deployed or not\"}"
+
+  ServiceNowGetDevOpsChange:
+       runs-on: ubuntu-latest
+       needs: ServiceNowUpdateDevOpsChange
+       container:
+         image: servicenowdocker/sndevops:6.2.0
+       env:
+         CI_JOB_NAME: "ServiceNowGetDevOpsChange"
+  
+       steps:
+         - name: get change
+           run: |
+             sndevopscli get change -p "{\"buildNumber\":\"${{ github.run_number }}\",\"stageName\":\"ServiceNowGetDevOpsChange\",\"pipelineName\":\"${{ github.repository }}/${{ github.workflow }}\",\"gitTag\":\"${{ env.GIT_TAG }}\"}"
+ 
+  ArtifactAndPackage:
+      runs-on: ubuntu-latest
+      needs: build
+      container:
+        image: servicenowdocker/sndevops:6.2.0
+      env:
+        CI_JOB_NAME: "ArtifactAndPackage"
+      steps:
+        - name: create artifact
+          run: |
+             sndevopscli create artifact -a "[{\"name\": \"com:customactiondemo\",\"version\": \"${{ env.GIT_TAG != 'no-tag' && env.GIT_TAG || format('1.{0}', github.run_number) }}\",\"semanticVersion\": \"${{ env.GIT_TAG != 'no-tag' && env.GIT_TAG || format('1.{0}.0', github.run_number) }}\",\"repositoryName\": \"${{ github.repository }}\"}]"
+             sndevopscli create package -n "Test_Package_${{ env.GIT_TAG }}" -a "[{\"name\": \"com:customactiondemo\",\"version\": \"${{ env.GIT_TAG != 'no-tag' && env.GIT_TAG || format('1.{0}', github.run_number) }}\",\"semanticVersion\": \"${{ env.GIT_TAG != 'no-tag' && env.GIT_TAG || format('1.{0}.0', github.run_number) }}\",\"repositoryName\": \"${{ github.repository }}\"}]"
+
+  ServiceNowDevOpsSecurityScan:
+      name: ServiceNowDevOpsSecurityScan
+      runs-on: ubuntu-latest
+      needs: build
+      container:
+        image: servicenowdocker/sndevops:6.2.0
+      steps:
+        - name: security scan
+          run: |
+           echo 'security step - Git Tag: ${{ env.GIT_TAG }}'
+           # sndevopscli create securityScan -p "{ \"pipelineInfo\": {  \"runId\": \"${{ github.run_id }}\",   \"runNumber\": \"${{ github.run_number }}\", \"runAttempt\": \"${{ github.run_attempt }}\",   \"job\": \"ServiceNowDevOpsSecurityScan\",  \"workflow\": \"${{ github.workflow }}\",  \"repository\": \"${{github.repository}}\", \"gitTag\": \"${{ env.GIT_TAG }}\" }, \"securityResultAttributes\": { \"scanner\": \"Veracode\",    \"applicationName\": \"PetStoreAPI-Github\",\"buildVersion\": \"\",   \"securityToolId\": \"\"}}"
